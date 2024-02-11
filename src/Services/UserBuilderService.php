@@ -11,19 +11,30 @@ class UserBuilderService
     public function __construct(
         private readonly MeetManager $meetManager,
         private readonly UserManager $userManager,
-    ) {
+    )
+    {
     }
 
-/**
- * @param string[] $texts
- */
-public function createUserWithMeets(string $login, array $texts): User
-{
-    $user = $this->userManager->create($login);
-    foreach ($texts as $text) {
-        $this->meetManager->postMeet($user, $text);
-    }
+    /**
+     * @param string[] $texts
+     */
+    public function createUserWithMeets(string $login, array $texts, array $formats): User
+    {
+        $user = $this->userManager->create($login);
+        $count = count($texts);
 
-    return $user;
-}
+      //  foreach ($texts as $text) {
+       //     $this->meetManager->postMeet($user, $text);
+      //  }
+        for ($i=0;$i<$count;$i++ )
+        {
+            $this->meetManager->postMeet($user, $formats[$i], $texts[$i]);
+                   }
+var_dump( $count);
+            $userId = $user->getId();
+            $this->userManager->clearEntityManager();
+
+            return $this->userManager->findUser($userId);
+        }
+
 }

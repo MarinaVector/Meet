@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -13,25 +15,36 @@ class User
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    private ?int $id = null;
 
-   // #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Tweet')]
-   // private Collection $meets;
 
-  /*  public function __construct()
+    public function __construct()
     {
         $this->meets = new ArrayCollection();
+
     }
-  */
-    private ?int $id = null;
+
+
 
     #[ORM\Column(type: 'string', length: 32, nullable: false)]
     private string $login;
+
+    #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Meet')]
+    private Collection $meets;
+
 
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
     private DateTime $createdAt;
 
     #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: false)]
     private DateTime $updatedAt;
+    public function addMeet(Meet $meet): void
+    {
+        if (!$this->meets->contains($meet)) {
+            $this->meets->add($meet);
+        }
+    }
+
 
     public function getId(): int
     {
@@ -77,7 +90,7 @@ class User
             'login' => $this->login,
             'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
             'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
-           // 'meets' => array_map(static fn(Meet $meet) => $meet->toArray(), $this->meets->toArray()),
+            'meets' => array_map(static fn(Meet $meet) => $meet->toArray(), $this->meets->toArray()),
         ];
     }
 }

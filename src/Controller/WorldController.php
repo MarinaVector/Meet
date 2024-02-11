@@ -10,10 +10,18 @@ use Symfony\Component\HttpFoundation\Response;
 class WorldController extends AbstractController
 {
 
-    public function hello(UserManager $userManager): Response
+    public function __construct(private readonly UserBuilderService $userBuilderService)
     {
-        $user = $userManager->create('My user');
+    }
 
+    public function hello(): Response
+    {
+        $user = $this->userBuilderService->createUserWithMeets(
+            'mr Mkien',
+            ['online'],
+            ['let s go to sports!!!']
+        );
+//return 'vvv';
         return $this->json($user->toArray());
     }
 }
