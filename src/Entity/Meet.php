@@ -23,7 +23,7 @@ class Meet
     private string $text;
 
     #[ORM\Column(type: 'string', length: 50)]
-    private string $format;
+    private  $format;
 
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
     private DateTime $createdAt;
@@ -61,12 +61,12 @@ class Meet
         $this->text = $text;
     }
 
-    public function getFormat(): string
+    public function getFormat()
     {
         return $this->format;
     }
 
-    public function setFormat(string $format): void
+    public function setFormat(string $format)
     {
         $this->format = $format;
     }

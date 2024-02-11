@@ -11,27 +11,14 @@ use Symfony\Component\HttpFoundation\Response;
 class WorldController extends AbstractController
 {
 
-    public function __construct(private readonly UserBuilderService $userBuilderService)
+    public function __construct(private readonly UserManager $userManager)
     {
     }
 
     public function hello(): Response
     {
-        /*
-        $user = $this->userBuilderService->createUserWithMeets(
-            'mr Mkien',
-            ['online'],
-            ['let s go to sports!!!']
-        );
-
-        return $this->json($user->toArray());
-        */
-        $users = $this->userBuilderService->createUserWithFollower(
-        'J.R.R. Tolkien',
-        'Ivan Ivanov'
-    );
+        $users = $this->userManager->findUsersByLogin('J.R.R. Tolkien');
 
         return $this->json(array_map(static fn(User $user) => $user->toArray(), $users));
-
     }
 }
