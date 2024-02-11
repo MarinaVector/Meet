@@ -5,14 +5,15 @@ namespace App\Services;
 use App\Entity\User;
 use App\Managers\MeetManager;
 use App\Managers\UserManager;
+use App\Managers\SubscriptionManager;
 
 class UserBuilderService
 {
     public function __construct(
         private readonly MeetManager $meetManager,
         private readonly UserManager $userManager,
-    )
-    {
+        private readonly SubscriptionManager $subscriptionManager,
+    ) {
     }
 
     /**
@@ -41,6 +42,7 @@ class UserBuilderService
         $user = $this->userManager->create($login);
         $follower = $this->userManager->create($followerLogin);
         $this->userManager->subscribeUser($user, $follower);
+        $this->subscriptionManager->addSubscription($user, $follower);
 
         return [$user, $follower];
     }

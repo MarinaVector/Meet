@@ -27,6 +27,8 @@ class User
         $this->meets = new ArrayCollection();
         $this->authors = new ArrayCollection();
         $this->followers = new ArrayCollection();
+        $this->subscriptionAuthors = new ArrayCollection();
+        $this->subscriptionFollowers = new ArrayCollection();
     }
 
     #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'authors')]
@@ -34,6 +36,7 @@ class User
     #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
     #[ORM\InverseJoinColumn(name: 'follower_id', referencedColumnName: 'id')]
     private Collection $followers;
+
 
     #[ORM\Column(type: 'string', length: 32, nullable: false)]
     private string $login;
@@ -53,6 +56,12 @@ class User
             $this->meets->add($meet);
         }
     }
+    #[ORM\OneToMany(mappedBy: 'follower', targetEntity: 'Subscription')]
+    private Collection $subscriptionAuthors;
+
+    #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Subscription')]
+    private Collection $subscriptionFollowers;
+
 
     public function addFollower(User $follower): void
     {
@@ -124,6 +133,44 @@ class User
             'meets' => array_map(static fn(Meet $meet) => $meet->toArray(), $this->meets->toArray()),
             'followers' => array_map(static fn(User $user) => $user->getLogin(), $this->followers->toArray()),
             'authors' => array_map(static fn(User $user) => $user->getLogin(), $this->authors->toArray()),
+            'followers' => array_map(
+                static fn(User $user) => ['id' => $user->getId(), 'login' => $user->getLogin()],
+                $this->followers->toArray()
+            ),
+            'authors' => array_map(
+                static fn(User $user) => ['id' => $user->getId(), 'login' => $user->getLogin()],
+                $this->authors->toArray()
+            ),
+            'subscriptionFollowers' => array_map(
+                static fn(Subscription $subscription) => [
+                    'subscriptionId' => $subscription->getId(),
+                    'userId' => $subscription->getFollower()->getId(),
+                    'login' => $subscription->getFollower()->getLogin(),
+                ],
+                $this->subscriptionFollowers->toArray()
+            ),
+            'subscriptionAuthors' => array_map(
+                static fn(Subscription $subscription) => [
+                    'subscriptionId' => $subscription->getId(),
+                    'userId' => $subscription->getAuthor()->getId(),
+                    'login' => $subscription->getAuthor()->getLogin(),
+                ],
+                $this->subscriptionAuthors->toArray()
+            ),
         ];
     }
+    public function addSubscriptionAuthor(Subscription $subscription): void
+    {
+        if (!$this->subscriptionAuthors->contains($subscription)) {
+            $this->subscriptionAuthors->add($subscription);
+        }
+    }
+
+    public function addSubscriptionFollower(Subscription $subscription): void
+    {
+        if (!$this->subscriptionFollowers->contains($subscription)) {
+            $this->subscriptionFollowers->add($subscription);
+        }
+    }
+
 }
