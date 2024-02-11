@@ -17,14 +17,23 @@ class User
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private ?int $id = null;
 
+    #[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'followers')]
+    private Collection $authors;
+
+
 
     public function __construct()
     {
         $this->meets = new ArrayCollection();
-
+        $this->authors = new ArrayCollection();
+        $this->followers = new ArrayCollection();
     }
 
-
+    #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'authors')]
+    #[ORM\JoinTable(name: 'author_follower')]
+    #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'follower_id', referencedColumnName: 'id')]
+    private Collection $followers;
 
     #[ORM\Column(type: 'string', length: 32, nullable: false)]
     private string $login;
@@ -42,6 +51,20 @@ class User
     {
         if (!$this->meets->contains($meet)) {
             $this->meets->add($meet);
+        }
+    }
+
+    public function addFollower(User $follower): void
+    {
+        if (!$this->followers->contains($follower)) {
+            $this->followers->add($follower);
+        }
+    }
+
+    public function addAuthor(User $author): void
+    {
+        if (!$this->authors->contains($author)) {
+            $this->authors->add($author);
         }
     }
 
@@ -81,8 +104,16 @@ class User
     public function setUpdatedAt(): void {
         $this->updatedAt = new DateTime();
     }
+    #[ArrayShape([
+        'id' => 'int|null',
+        'login' => 'string',
+        'createdAt' => 'string',
+        'updatedAt' => 'string',
+        'meets' => ['id' => 'int|null', 'login' => 'string', 'createdAt' => 'string', 'updatedAt' => 'string'],
+        'followers' => 'string[]',
+        'authors' => 'string[]'
+    ])]
 
-    #[ArrayShape(['id' => 'int|null', 'login' => 'string', 'createdAt' => 'string', 'updatedAt' => 'string'])]
     public function toArray(): array
     {
         return [
@@ -91,6 +122,8 @@ class User
             'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
             'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
             'meets' => array_map(static fn(Meet $meet) => $meet->toArray(), $this->meets->toArray()),
+            'followers' => array_map(static fn(User $user) => $user->getLogin(), $this->followers->toArray()),
+            'authors' => array_map(static fn(User $user) => $user->getLogin(), $this->authors->toArray()),
         ];
     }
 }

@@ -30,11 +30,20 @@ class UserBuilderService
         {
             $this->meetManager->postMeet($user, $formats[$i], $texts[$i]);
                    }
-var_dump( $count);
+        return $user;
             $userId = $user->getId();
             $this->userManager->clearEntityManager();
 
             return $this->userManager->findUser($userId);
         }
+    public function createUserWithFollower(string $login, string $followerLogin): array
+    {
+        $user = $this->userManager->create($login);
+        $follower = $this->userManager->create($followerLogin);
+        $this->userManager->subscribeUser($user, $follower);
+
+        return [$user, $follower];
+    }
+
 
 }
