@@ -7,7 +7,8 @@ use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
 
 #[ORM\Table(name: 'meet')]
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: \App\Repository\MeetRepository::class)]
+
 class Meet
 {
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
@@ -23,13 +24,14 @@ class Meet
     private string $text;
 
     #[ORM\Column(type: 'string', length: 50)]
-    private  $format;
+    private string $format;
 
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
     private DateTime $createdAt;
 
     #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: false)]
     private DateTime $updatedAt;
+
 
     public function getId(): int
     {

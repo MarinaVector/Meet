@@ -24,13 +24,12 @@ class UserBuilderService
         $user = $this->userManager->create($login);
         $count = count($texts);
 
-      //  foreach ($texts as $text) {
-       //     $this->meetManager->postMeet($user, $text);
-      //  }
-        for ($i=0;$i<$count;$i++ )
-        {
-            $this->meetManager->postMeet($user, $formats[$i], $texts[$i]);
-                   }
+        for ($i = 0; $i < $count; $i++) {
+            $text = $texts[$i];
+            $format = $formats[$i] ?? 'default'; // Fallback to a default format if not specified
+            $this->meetManager->postMeet($user, $text, $format);
+        }
+
         return $user;
             $userId = $user->getId();
             $this->userManager->clearEntityManager();
