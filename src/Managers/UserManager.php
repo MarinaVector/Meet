@@ -14,9 +14,6 @@ public function create(string $login): User
 {
     $user = new User();
     $user->setLogin($login);
-    $user->setCreatedAt();
-    $user->setUpdatedAt();
-
     $this->entityManager->persist($user);
     $this->entityManager->flush();
 
@@ -49,6 +46,18 @@ public function subscribeUser(User $author, User $follower): void
 public function findUsersByLogin(string $name): array
 {
     return $this->entityManager->getRepository(User::class)->findBy(['login' => $name]);
+}
+
+public function updateUserLogin(int $userId, string $login): ?User
+{
+        $user = $this->findUser($userId);
+        if (!($user instanceof User)) {
+            return null;
+        }
+        $user->setLogin($login);
+        $this->entityManager->flush();
+
+        return $user;
 }
 
 }

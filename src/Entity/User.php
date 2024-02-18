@@ -8,9 +8,11 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
 
+
 #[ORM\Table(name: '`user`')]
 #[ORM\Entity]
-class User
+#[ORM\HasLifecycleCallbacks]
+class User implements HasMetaTimestampsInterface
 {
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
     #[ORM\Id]
@@ -46,10 +48,13 @@ class User
 
 
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
+
     private DateTime $createdAt;
 
     #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: false)]
+
     private DateTime $updatedAt;
+
     public function addMeet(Meet $meet): void
     {
         if (!$this->meets->contains($meet)) {
@@ -97,11 +102,12 @@ class User
     {
         $this->login = $login;
     }
-
+    #[ORM\PrePersist]
     public function getCreatedAt(): DateTime {
         return $this->createdAt;
     }
-
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
     public function setCreatedAt(): void {
         $this->createdAt = new DateTime();
     }

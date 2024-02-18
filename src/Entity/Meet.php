@@ -8,6 +8,7 @@ use JetBrains\PhpStorm\ArrayShape;
 
 #[ORM\Table(name: 'meet')]
 #[ORM\Entity(repositoryClass: \App\Repository\MeetRepository::class)]
+#[ORM\Index(columns: ['author_id'], name: 'meet__author_id__ind')]
 
 class Meet
 {
