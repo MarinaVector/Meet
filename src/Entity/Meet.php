@@ -3,14 +3,18 @@
 namespace App\Entity;
 
 use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
+use App\Repository\MeetRepository;
+
 
 #[ORM\Table(name: 'meet')]
 #[ORM\Entity(repositoryClass: \App\Repository\MeetRepository::class)]
 #[ORM\Index(columns: ['author_id'], name: 'meet__author_id__ind')]
 
-class Meet
+class Meet implements HasMetaTimestampsInterface
 {
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
     #[ORM\Id]
@@ -90,12 +94,11 @@ class Meet
         $this->updatedAt = new DateTime();
     }
 
-    #[ArrayShape(['id' => 'int|null', 'login' => 'string', 'format' => 'string', 'text' => 'string','createdAt' => 'string', 'updatedAt' => 'string'])]
+    #[ArrayShape(['id' => 'int|null', 'text' => 'string', 'format' => 'string', 'createdAt' => 'string', 'updatedAt' => 'string'])]
     public function toArray(): array
     {
         return [
             'id' => $this->id,
-            'login' => $this->author->getLogin(),
             'text' => $this->text,
             'format' => $this->format,
             'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),

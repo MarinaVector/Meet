@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\UserRepository;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -10,7 +11,7 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 #[ORM\Table(name: '`user`')]
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 class User implements HasMetaTimestampsInterface
 {
@@ -19,12 +20,8 @@ class User implements HasMetaTimestampsInterface
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private ?int $id = null;
 
-    #[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'followers')]
-    private Collection $authors;
 
-
-
-    public function __construct()
+        public function __construct()
     {
         $this->meets = new ArrayCollection();
         $this->authors = new ArrayCollection();
@@ -34,9 +31,10 @@ class User implements HasMetaTimestampsInterface
     }
 
     #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'authors')]
-    #[ORM\JoinTable(name: 'author_follower')]
+    #[ORM\JoinTable(name: 'subscription')]
     #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
     #[ORM\InverseJoinColumn(name: 'follower_id', referencedColumnName: 'id')]
+
     private Collection $followers;
 
 
