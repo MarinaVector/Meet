@@ -4,23 +4,26 @@ namespace App\Controller\Api\v2;
 
 use App\Entity\Subscription;
 use App\Entity\User;
-use App\Managers\SubscriptionManager;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Managers\SubscriptionManager;
+
 
 #[Route(path: 'api/v2/subscription')]
 class SubscriptionController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    private EntityManagerInterface $entityManager;
+    private SubscriptionManager $subscriptionManager;
+
+    public function __construct(EntityManagerInterface $entityManager, SubscriptionManager $subscriptionManager)
     {
         $this->entityManager = $entityManager;
+        $this->subscriptionManager = $subscriptionManager;
+
     }
 
     #[Route(path: '', methods: ['POST'])]
@@ -36,13 +39,10 @@ class SubscriptionController extends AbstractController
             return $this->json(['error' => 'Author or Follower not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $subscription = new Subscription();
-        $subscription->setCreatedAt();
-        $subscription->setUpdatedAt();
-        $subscription->setAuthor($author);
-        $subscription->setFollower($follower);
+        $subscription = $this->subscriptionManager->createSubscription($author, $follower);
 
-       $this->entityManager->persist($subscription);
+
+        $this->entityManager->persist($subscription);
        $this->entityManager->flush();
 
         return $this->json(['success' => 'Subscription created successfully'], Response::HTTP_CREATED);

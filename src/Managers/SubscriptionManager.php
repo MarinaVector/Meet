@@ -9,25 +9,27 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class SubscriptionManager
 {
+
     public function __construct(private readonly EntityManagerInterface $entityManager)
     {
+
     }
 
 
-    public function create(User $author, User $follower): Subscription {
+    public function createSubscription(User $author, User $follower): Subscription
+    {
         $subscription = new Subscription();
+        $subscription->setCreatedAt(new \DateTime());
+        $subscription->setUpdatedAt(new \DateTime());
         $subscription->setAuthor($author);
         $subscription->setFollower($follower);
-        $author->addSubscriptionFollower($subscription);
-        $follower->addSubscriptionAuthor($subscription);
-        $subscription->setCreatedAt();
-        $subscription->setUpdatedAt();
 
         $this->entityManager->persist($subscription);
         $this->entityManager->flush();
 
         return $subscription;
     }
+
 
     // In SubscriptionRepository or a related service
     public function findSubscriptionsWithUser(User $user): array {
