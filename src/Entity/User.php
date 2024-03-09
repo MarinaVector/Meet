@@ -8,20 +8,54 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
-
+use Gedmo\Mapping\Annotation\Timestampable;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: '`user`')]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\HasLifecycleCallbacks]
 class User implements HasMetaTimestampsInterface
 {
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    private ?int $id = null;
+    private string $id;
 
+    #[ORM\Column(type: 'string', length: 32, nullable: false)]
+    private string $login;
 
-        public function __construct()
+    #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
+    #[Timestampable(on: 'create')]
+    private DateTime $createdAt;
+
+    #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: false)]
+    #[Timestampable(on: 'update')]
+    private DateTime $updatedAt;
+
+    #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Meet')]
+    private Collection $meets;
+
+    #[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'followers')]
+    private Collection $authors;
+
+    #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'authors')]
+    #[ORM\JoinTable(name: 'author_follower')]
+    #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'follower_id', referencedColumnName: 'id')]
+    private Collection $followers;
+
+    #[ORM\OneToMany(mappedBy: 'follower', targetEntity: 'Subscription')]
+    private Collection $subscriptionAuthors;
+
+    #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Subscription')]
+    private Collection $subscriptionFollowers;
+
+    #[ORM\Column(type: 'string', length: 32, nullable: false)]
+    private string $password;
+
+    #[ORM\Column(type: 'boolean', nullable: false)]
+    private bool $isActive;
+
+    public function __construct()
     {
         $this->meets = new ArrayCollection();
         $this->authors = new ArrayCollection();
@@ -30,41 +64,20 @@ class User implements HasMetaTimestampsInterface
         $this->subscriptionFollowers = new ArrayCollection();
     }
 
-    #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'authors')]
-    #[ORM\JoinTable(name: 'subscription')]
-    #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
-    #[ORM\InverseJoinColumn(name: 'follower_id', referencedColumnName: 'id')]
-
-    private Collection $followers;
-
-
-    #[ORM\Column(type: 'string', length: 32, nullable: false)]
-    private string $login;
-
-    #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Meet')]
-    private Collection $meets;
-
-
-    #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
-
-    private DateTime $createdAt;
-
-    #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: false)]
-
-    private DateTime $updatedAt;
-
-    public function addMeet(Meet $meet): void
+    public function addSubscriptionAuthor(Subscription $subscription): void
     {
-        if (!$this->meets->contains($meet)) {
-            $this->meets->add($meet);
+        if (!$this->subscriptionAuthors->contains($subscription)) {
+            $this->subscriptionAuthors->add($subscription);
         }
     }
-    #[ORM\OneToMany(mappedBy: 'follower', targetEntity: 'Subscription')]
-    private Collection $subscriptionAuthors;
 
-    #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Subscription')]
-    private Collection $subscriptionFollowers;
 
+    public function addSubscriptionFollower(Subscription $subscription): void
+    {
+        if (!$this->subscriptionFollowers->contains($subscription)) {
+            $this->subscriptionFollowers->add($subscription);
+        }
+    }
 
     public function addFollower(User $follower): void
     {
@@ -80,10 +93,18 @@ class User implements HasMetaTimestampsInterface
         }
     }
 
+    public function addMeet(Meet $meet): void
+    {
+        if (!$this->meets->contains($meet)) {
+            $this->meets->add($meet);
+        }
+    }
 
     public function getId(): int
     {
-        return $this->id;
+
+                   return $this->id;
+
     }
 
     public function setId(int $id): void
@@ -100,12 +121,11 @@ class User implements HasMetaTimestampsInterface
     {
         $this->login = $login;
     }
-    #[ORM\PrePersist]
+
     public function getCreatedAt(): DateTime {
         return $this->createdAt;
     }
-    #[ORM\PrePersist]
-    #[ORM\PreUpdate]
+
     public function setCreatedAt(): void {
         $this->createdAt = new DateTime();
     }
@@ -117,16 +137,38 @@ class User implements HasMetaTimestampsInterface
     public function setUpdatedAt(): void {
         $this->updatedAt = new DateTime();
     }
+
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): void
+    {
+        $this->password = $password;
+    }
+
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): void
+    {
+        $this->isActive = $isActive;
+    }
+
     #[ArrayShape([
         'id' => 'int|null',
         'login' => 'string',
         'createdAt' => 'string',
         'updatedAt' => 'string',
-        'meets' => ['id' => 'int|null', 'login' => 'string', 'createdAt' => 'string', 'updatedAt' => 'string'],
+        'meets' => ['id' =>'int|null', 'login' => 'string', 'createdAt' => 'string', 'updatedAt' => 'string'],
         'followers' => 'string[]',
         'authors' => 'string[]'
     ])]
-
     public function toArray(): array
     {
         return [
@@ -135,8 +177,6 @@ class User implements HasMetaTimestampsInterface
             'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
             'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
             'meets' => array_map(static fn(Meet $meet) => $meet->toArray(), $this->meets->toArray()),
-            'followers' => array_map(static fn(User $user) => $user->getLogin(), $this->followers->toArray()),
-            'authors' => array_map(static fn(User $user) => $user->getLogin(), $this->authors->toArray()),
             'followers' => array_map(
                 static fn(User $user) => ['id' => $user->getId(), 'login' => $user->getLogin()],
                 $this->followers->toArray()
@@ -163,18 +203,12 @@ class User implements HasMetaTimestampsInterface
             ),
         ];
     }
-    public function addSubscriptionAuthor(Subscription $subscription): void
-    {
-        if (!$this->subscriptionAuthors->contains($subscription)) {
-            $this->subscriptionAuthors->add($subscription);
-        }
-    }
 
-    public function addSubscriptionFollower(Subscription $subscription): void
+    /**
+     * @return User[]
+     */
+    public function getFollowers(): array
     {
-        if (!$this->subscriptionFollowers->contains($subscription)) {
-            $this->subscriptionFollowers->add($subscription);
-        }
+        return $this->followers->toArray();
     }
-
 }

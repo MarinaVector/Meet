@@ -2,12 +2,18 @@
 
 namespace App\Controller\Api\v2;
 
+use App\DTO\ManageUserDTO;
 use App\Entity\Subscription;
 use App\Entity\User;
+use App\Form\Type\CreateUserType;
+use App\Form\Type\UpdateUserType;
+use App\Form\Type\UserType;
 use App\Managers\UserManager;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Entity;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,8 +25,11 @@ class UserController extends AbstractController
     private const DEFAULT_PAGE = 0;
     private const DEFAULT_PER_PAGE = 20;
 
-    public function __construct(private readonly UserManager $userManager)
-    {
+    public function __construct(
+        private readonly UserManager $userManager,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly FormFactoryInterface $formFactory,
+    ) {
     }
 
     #[Route(path: '', methods: ['POST'])]
@@ -74,7 +83,33 @@ class UserController extends AbstractController
         return new JsonResponse($data, $code);
     }
 
+    #[Route(path: '/create-user', name: 'create_user', methods: ['GET', 'POST'])]
+    #[Route(path: '/update-user/{id}', name: 'update_user', methods: ['GET', 'PATCH'])]
+    public function manageUserAction(Request $request, string $_route, ?int $id = null): Response
+    {
+        if ($id) {
+            $user = $this->userManager->findUser($id);
+            $dto = ManageUserDTO::fromEntity($user);
+        }
+        $form = $this->formFactory->create(
+            $_route === 'create_user' ? CreateUserType::class : UpdateUserType::class,
+            $dto ?? null,
+        );
+        $form->handleRequest($request);
 
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var ManageUserDTO $userDto */
+            $userDto = $form->getData();
+
+            $this->userManager->saveUserFromDTO($user ?? new User(), $userDto);
+        }
+
+        return $this->renderForm('manageUser.html.twig', [
+            'form' => $form,
+            'isNew' => $_route === 'create_user',
+            'user' => $user ?? null,
+        ]);
+    }
 #[Route(path: '/test/{id}', methods: ['GET'])]
     public function test2($id): Response
     {

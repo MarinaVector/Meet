@@ -13,13 +13,13 @@ use App\Repository\MeetRepository;
 #[ORM\Table(name: 'meet')]
 #[ORM\Entity(repositoryClass: \App\Repository\MeetRepository::class)]
 #[ORM\Index(columns: ['author_id'], name: 'meet__author_id__ind')]
-
+#[ORM\UniqueConstraint('unique_smth', ['author_id', 'text'])]
 class Meet implements HasMetaTimestampsInterface
 {
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    private ?int $id = null;
+    private string $id;
 
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'meets')]
     #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]

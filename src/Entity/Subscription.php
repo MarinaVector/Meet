@@ -15,7 +15,7 @@ class Subscription
     #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    private int $id;
+    private string $id;
 
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'subscriptionFollowers')]
     #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
@@ -31,12 +31,12 @@ class Subscription
     #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: false)]
     private DateTime $updatedAt;
 
-    public function getId(): int
+    public function getId(): string
     {
         return $this->id;
     }
 
-    public function setId(int $id): void
+    public function setId(string $id): void
     {
         $this->id = $id;
     }
