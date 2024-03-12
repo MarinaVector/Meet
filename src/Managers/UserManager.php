@@ -7,12 +7,14 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 
 class UserManager
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
+    public function __construct(private readonly EntityManagerInterface $entityManager,
+                                private readonly UserPasswordHasherInterface $userPasswordHasher)
     {
     }
 
@@ -37,7 +39,7 @@ class UserManager
     public function saveUserFromDTO(User $user, ManageUserDTO $manageUserDTO): ?int
     {
         $user->setLogin($manageUserDTO->login);
-        $user->setPassword($manageUserDTO->password);
+        $user->setPassword($this->userPasswordHasher->hashPassword($user, $manageUserDTO->password));
         $user->setIsActive($manageUserDTO->isActive);
         $this->entityManager->persist($user);
         $this->entityManager->flush();
