@@ -19,6 +19,7 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/Controller/Common/*'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
@@ -29,3 +30,6 @@ services:
     App\Doctrine\MetaTimestampsPrePersistEventListener:
         tags:
             - { name: doctrine.event_listener, event: prePersist }
+    App\Services\AuthService:
+        arguments:
+            $tokenTTL: '%env(JWT_TTL_SEC)%'

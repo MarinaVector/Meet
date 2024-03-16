@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
+use JMS\Serializer\Annotation as JMS;
 use Gedmo\Mapping\Annotation\Timestampable;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -17,10 +18,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements HasMetaTimestampsInterface, UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
+    #[ORM\Column(name: 'id', type: 'bigint', unique:true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    private string $id;
+    #[JMS\Groups(['user-id-list'])]
+    private ?string $id = null;
 
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
     #[Timestampable(on: 'create')]
@@ -49,16 +51,24 @@ class User implements HasMetaTimestampsInterface, UserInterface, PasswordAuthent
     private Collection $subscriptionFollowers;
 
     #[ORM\Column(type: 'string', length: 32, unique: true, nullable: false)]
+    #[JMS\Groups(['video-user-info'])]
     private string $login;
 
     #[ORM\Column(type: 'string', length: 120, nullable: false)]
+    #[JMS\Exclude]
     private string $password;
 
     #[ORM\Column(type: 'json', length: 1024, nullable: false)]
     private array $roles = [];
 
     #[ORM\Column(type: 'boolean', nullable: false)]
+    #[JMS\Groups(['video-user-info'])]
+    #[JMS\SerializedName('isActive')]
     private bool $isActive;
+
+    #[ORM\Column(type: 'string', length: 32, unique: true, nullable: true)]
+    private ?string $token = null;
+
 
     public function __construct()
     {
@@ -192,7 +202,15 @@ class User implements HasMetaTimestampsInterface, UserInterface, PasswordAuthent
     {
         return $this->login;
     }
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
 
+    public function setToken(?string $token): void
+    {
+        $this->token = $token;
+    }
 
     #[ArrayShape([
         'id' => 'int|null',
