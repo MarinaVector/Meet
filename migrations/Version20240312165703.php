@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20240218154017 extends AbstractMigration
+final class Version20240312165703 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -20,14 +20,16 @@ final class Version20240218154017 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER INDEX author_follower__author_id__ind RENAME TO IDX_564623F3F675F31B');
-        $this->addSql('ALTER INDEX author_follower__follower_id__ind RENAME TO IDX_564623F3AC24F853');
+        $this->addSql('ALTER TABLE "user" ADD roles JSON NOT NULL');
+        $this->addSql('ALTER TABLE "user" ALTER password TYPE VARCHAR(120)');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_8D93D649AA08CB10 ON "user" (login)');
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER INDEX idx_564623f3ac24f853 RENAME TO author_follower__follower_id__ind');
-        $this->addSql('ALTER INDEX idx_564623f3f675f31b RENAME TO author_follower__author_id__ind');
+        $this->addSql('DROP INDEX UNIQ_8D93D649AA08CB10');
+        $this->addSql('ALTER TABLE "user" DROP roles');
+        $this->addSql('ALTER TABLE "user" ALTER password TYPE VARCHAR(32)');
     }
 }

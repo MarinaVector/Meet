@@ -8,20 +8,21 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
+use JMS\Serializer\Annotation as JMS;
 use Gedmo\Mapping\Annotation\Timestampable;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: '`user`')]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User implements HasMetaTimestampsInterface
+class User implements HasMetaTimestampsInterface, UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[ORM\Column(name: 'id', type: 'bigint', unique: true)]
+    #[ORM\Column(name: 'id', type: 'bigint', unique:true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    private string $id;
-
-    #[ORM\Column(type: 'string', length: 32, nullable: false)]
-    private string $login;
+    #[JMS\Groups(['user-id-list'])]
+    private ?string $id = null;
 
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
     #[Timestampable(on: 'create')]
@@ -49,11 +50,25 @@ class User implements HasMetaTimestampsInterface
     #[ORM\OneToMany(mappedBy: 'author', targetEntity: 'Subscription')]
     private Collection $subscriptionFollowers;
 
-    #[ORM\Column(type: 'string', length: 32, nullable: false)]
+    #[ORM\Column(type: 'string', length: 32, unique: true, nullable: false)]
+    #[JMS\Groups(['video-user-info'])]
+    private string $login;
+
+    #[ORM\Column(type: 'string', length: 120, nullable: false)]
+    #[JMS\Exclude]
     private string $password;
 
+    #[ORM\Column(type: 'json', length: 1024, nullable: false)]
+    private array $roles = [];
+
     #[ORM\Column(type: 'boolean', nullable: false)]
+    #[JMS\Groups(['video-user-info'])]
+    #[JMS\SerializedName('isActive')]
     private bool $isActive;
+
+    #[ORM\Column(type: 'string', length: 32, unique: true, nullable: true)]
+    private ?string $token = null;
+
 
     public function __construct()
     {
@@ -102,8 +117,7 @@ class User implements HasMetaTimestampsInterface
 
     public function getId(): int
     {
-
-                   return $this->id;
+        return $this->id;
 
     }
 
@@ -121,6 +135,26 @@ class User implements HasMetaTimestampsInterface
     {
         $this->login = $login;
     }
+    /**
+     * @return string[]
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    /**
+     * @param string[] $roles
+     */
+    public function setRoles(array $roles): void
+    {
+        $this->roles = $roles;
+    }
+
 
     public function getCreatedAt(): DateTime {
         return $this->createdAt;
@@ -160,20 +194,44 @@ class User implements HasMetaTimestampsInterface
         $this->isActive = $isActive;
     }
 
+    public function eraseCredentials(): void
+    {
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->login;
+    }
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
+
+    public function setToken(?string $token): void
+    {
+        $this->token = $token;
+    }
+
     #[ArrayShape([
         'id' => 'int|null',
         'login' => 'string',
+        'password' => 'string',
+        'roles' => 'string[]',
         'createdAt' => 'string',
         'updatedAt' => 'string',
         'meets' => ['id' =>'int|null', 'login' => 'string', 'createdAt' => 'string', 'updatedAt' => 'string'],
         'followers' => 'string[]',
-        'authors' => 'string[]'
+        'authors' => 'string[]',
+        'subscriptionFollowers' =>  ['subscriptionId' => 'int|null', 'userId' => 'int|null', 'login' => 'string'],
+        'subscriptionAuthors' =>  ['subscriptionId' => 'int|null', 'userId' => 'int|null', 'login' => 'string'],
     ])]
     public function toArray(): array
     {
         return [
             'id' => $this->id,
             'login' => $this->login,
+            'password' => $this->password,
+            'roles' => $this->getRoles(),
             'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
             'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
             'meets' => array_map(static fn(Meet $meet) => $meet->toArray(), $this->meets->toArray()),

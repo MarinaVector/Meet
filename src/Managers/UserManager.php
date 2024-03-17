@@ -7,12 +7,14 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 
 class UserManager
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
+    public function __construct(private readonly EntityManagerInterface $entityManager,
+                                private readonly UserPasswordHasherInterface $userPasswordHasher)
     {
     }
 
@@ -37,7 +39,7 @@ class UserManager
     public function saveUserFromDTO(User $user, ManageUserDTO $manageUserDTO): ?int
     {
         $user->setLogin($manageUserDTO->login);
-        $user->setPassword($manageUserDTO->password);
+        $user->setPassword($this->userPasswordHasher->hashPassword($user, $manageUserDTO->password));
         $user->setIsActive($manageUserDTO->isActive);
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -197,5 +199,38 @@ class UserManager
             return false;
         }
         return $this->deleteUser($user);
+    }
+
+    public function findUserByLogin(string $login): ?User
+    {
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->entityManager->getRepository(User::class);
+        /** @var User|null $user */
+        $user = $userRepository->findOneBy(['login' => $login]);
+
+        return $user;
+    }
+
+    public function updateUserToken(string $login): ?string
+    {
+        $user = $this->findUserByLogin($login);
+        if ($user === null) {
+            return false;
+        }
+        $token = base64_encode(random_bytes(20));
+        $user->setToken($token);
+        $this->entityManager->flush();
+
+        return $token;
+    }
+
+    public function findUserByToken(string $token): ?User
+    {
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->entityManager->getRepository(User::class);
+        /** @var User|null $user */
+        $user = $userRepository->findOneBy(['token' => $token]);
+
+        return $user;
     }
 }
